@@ -42,7 +42,7 @@ at the top-level directory.
  */
 #define SUPERLU_MT_MAJOR_VERSION     4
 #define SUPERLU_MT_MINOR_VERSION     0
-#define SUPERLU_MT_PATCH_VERSION     0
+#define SUPERLU_MT_PATCH_VERSION     2
 
 #ifndef USER_ABORT
 #define USER_ABORT(msg) superlu_abort_and_exit(msg)
