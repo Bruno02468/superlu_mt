@@ -39,7 +39,8 @@ int main(int argc, char *argv[])
     trans_t  trans;
     double   *xact, *rhs;
     superlu_memusage_t   superlu_memusage;
-    void   parse_command_line();
+    void parse_command_line(int argc, char *argv[], int_t *procs, int_t *n,
+		   int_t *b, int_t *w, int_t *r, int_t *maxsup);
 
     nrhs              = 1;
     trans             = NOTRANS;
@@ -55,7 +56,7 @@ int main(int argc, char *argv[])
 
 #if ( PRNTlevel>=1 || DEBUGlevel>=1 )
     cpp_defs();
-    printf("int_t %d bytes\n", sizeof(int_t));
+    printf("int_t %lu bytes\n", sizeof(int_t));
 #endif
 
 #undef HB

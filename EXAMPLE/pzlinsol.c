@@ -16,12 +16,10 @@ at the top-level directory.
  * September 10, 2007
  *
  */
+#include <unistd.h> 
 #include "slu_mt_zdefs.h"
 
-#include <unistd.h>
-
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
     SuperMatrix   A;
     NCformat *Astore;
@@ -42,7 +40,7 @@ main(int argc, char *argv[])
     doublecomplex   *xact, *rhs;
     superlu_memusage_t   superlu_memusage;
     void parse_command_line(int argc, char *argv[], int_t *procs, int_t *n,
-                            int_t *b, int_t *w, int_t *r, int_t *maxsup);
+		   int_t *b, int_t *w, int_t *r, int_t *maxsup);
 
     nrhs              = 1;
     trans             = NOTRANS;
@@ -58,10 +56,11 @@ main(int argc, char *argv[])
 
 #if ( PRNTlevel>=1 || DEBUGlevel>=1 )
     cpp_defs();
-    printf("int_t %d bytes\n", sizeof(int_t));
+    printf("int_t %lu bytes\n", sizeof(int_t));
 #endif
 
-#define HB
+#undef HB
+
 #if defined( DEN )
     m = n;
     nnz = n * n;
@@ -78,8 +77,8 @@ main(int argc, char *argv[])
     zblockdiag(nb, bs, nnz, &a, &asub, &xa);
 #elif defined( HB )
     zreadhb(&m, &n, &nnz, &a, &asub, &xa);
-#else    
-    zreadmt(&m, &n, &nnz, &a, &asub, &xa);
+#else 
+    zreadMM(&m, &n, &nnz, &a, &asub, &xa);
 #endif
 
     zCreate_CompCol_Matrix(&A, m, n, nnz, a, asub, xa, SLU_NC, SLU_Z, SLU_GE);

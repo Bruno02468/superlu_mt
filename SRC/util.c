@@ -249,7 +249,7 @@ int cpp_defs()
 {
     printf("CPP Defs:\n");
 #ifdef PRNTlevel
-    printf("\tPRNTlevel=\n", PRNTlevel);
+    printf("\tPRNTlevel=%d\n", PRNTlevel);
 #endif 
 #ifdef DEBUGlevel
     printf("\tDEBUGlevel=%d\n", DEBUGlevel);

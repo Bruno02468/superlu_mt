@@ -329,9 +329,9 @@ zprint_lu_col(int_t pnum, char *msg, int_t pcol, int_t jcol, int_t w, int_t pivr
     k = xlusup[jcol];
     printf("(" IFMT ")\tL-col in s-node: xlsub " IFMT " - " IFMT ", xlusup " IFMT "-" IFMT "\n",
 	   pnum, xlsub[fsupc],xlsub_end[fsupc],xlusup[jcol],xlusup_end[jcol]);
-    for (i = xlsub[fsupc]; i < xlsub_end[fsupc]; ++i)
+    for (i = xlsub[fsupc]; i < xlsub_end[fsupc]; ++i, ++k)
 	printf("(" IFMT ")\t" IFMT "\t%.8e\t%.8e\n", pnum, lsub[i], 
-	lusup[k++].r, lusup[k++].i);
+	lusup[k].r, lusup[k].i);
 
     fflush(stdout);
 }

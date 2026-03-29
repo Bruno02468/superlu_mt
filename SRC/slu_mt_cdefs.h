@@ -417,7 +417,7 @@ extern void compressSUP (const int_t, GlobalLU_t *);
 extern int_t  *TreePostorder (int_t, int_t *);
 extern void creadmt (int_t *, int_t *, int_t *, complex **, int_t **, int_t **);
 extern void creadhb (int_t *, int_t *, int_t *, complex **, int_t **, int_t **);
-extern void creadMM (int *m, int *n, int_t *nonz, complex **nzval, int_t **rowind, int_t **colptr);
+extern void creadMM (int_t *m, int_t *n, int_t *nonz, complex **nzval, int_t **rowind, int_t **colptr);
 extern void cGenXtrue (int_t, int_t, complex *, int_t);
 extern void cFillRHS (trans_t, int_t, complex *, int_t, 
 		      SuperMatrix *, SuperMatrix *);

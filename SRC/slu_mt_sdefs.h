@@ -416,7 +416,7 @@ extern void compressSUP (const int_t, GlobalLU_t *);
 extern int_t  *TreePostorder (int_t, int_t *);
 extern void sreadmt (int_t *, int_t *, int_t *, float **, int_t **, int_t **);
 extern void sreadhb (int_t *, int_t *, int_t *, float **, int_t **, int_t **);
-extern void sreadMM (int *m, int *n, int_t *nonz, float **nzval, int_t **rowind, int_t **colptr);
+extern void sreadMM (int_t *m, int_t *n, int_t *nonz, float **nzval, int_t **rowind, int_t **colptr);
 extern void sGenXtrue (int_t, int_t, float *, int_t);
 extern void sFillRHS (trans_t, int_t, float *, int_t, 
 		      SuperMatrix *, SuperMatrix *);

@@ -9,15 +9,14 @@ The source code is distributed under BSD license, see the file License.txt
 at the top-level directory.
 */
 
-/*
+/*! @file creadMM.c 
+ * \brief Read a matrix stored in Matrix Market format.
+ *
+ * <pre>
  * -- SuperLU MT routine (version 4.0) --
  * Lawrence Berkeley National Lab, Univ. of California Berkeley
  * July 6, 2025
- *
-
-/*! @file 
- * \brief Read a matrix stored in Matrix Market format.
- *
+ * </pre>
  */
 #include <ctype.h>
 #include "slu_mt_cdefs.h"
@@ -37,7 +36,7 @@ at the top-level directory.
  */
 
 void
-creadMM(int *m, int *n, int_t *nonz,
+creadMM(int_t *m, int_t *n, int_t *nonz,
 	    complex **nzval, int_t **rowind, int_t **colptr)
 {
     int_t    j, k, jsize, nnz, nz, new_nonz;
@@ -110,7 +109,7 @@ creadMM(int *m, int *n, int_t *nonz,
 
      /* 3/ Read n and nnz */
 #ifdef _LONGINT
-    sscanf(line, "%d%d%lld",m, n, nonz);
+    sscanf(line, "%lld%lld%lld", m, n, nonz);
 #else
     sscanf(line, "%d%d%d",m, n, nonz);
 #endif

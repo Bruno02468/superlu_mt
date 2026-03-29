@@ -25,12 +25,11 @@ at the top-level directory.
  * PZGSSVX: perm_c, etree, colcnt_h, part_super_h.
  *
  */
+#include <unistd.h> 
 #include "slu_mt_zdefs.h"
 
-#include <unistd.h>
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
     SuperMatrix A, A1, L, U;
     SuperMatrix B, B1, X;
@@ -56,8 +55,9 @@ main(int argc, char *argv[])
     double      u, drop_tol, rpg, rcond;
     superlu_memusage_t superlu_memusage;
     void parse_command_line(int argc, char *argv[], int_t *nprocs, int_t *lwork, 
-                            int_t *w, int_t *relax, double *u, fact_t *fact, 
-                            trans_t *trans, yes_no_t *refact, equed_t *equed);
+		   int_t *w, int_t *relax, double *u, fact_t *fact, 
+		   trans_t *trans, yes_no_t *refact, equed_t *equed);
+
     /* Default parameters to control factorization. */
     nprocs = 1;
     fact  = EQUILIBRATE;
@@ -86,7 +86,7 @@ main(int argc, char *argv[])
 
 #if ( PRNTlevel==1 )
     cpp_defs();
-    printf("int_t %d bytes\n", sizeof(int_t));
+    printf("int_t %lu bytes\n", sizeof(int_t));
 #endif
 
 #define HB

@@ -16,12 +16,11 @@ at the top-level directory.
  * September 10, 2007
  *
  */
+#include <unistd.h>
 #include "slu_mt_cdefs.h"
 
-#include <unistd.h>
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
     SuperMatrix A, L, U;
     SuperMatrix B, X;
@@ -46,9 +45,9 @@ main(int argc, char *argv[])
     float      *ferr, *berr;
     float      u, drop_tol, rpg, rcond;
     superlu_memusage_t superlu_memusage;
-    void parse_command_line(int argc, char *argv[], int_t *nprocs, int_t *lwork,
-                            int_t *w, int_t *relax, float *u, fact_t *fact, 
-                            trans_t *trans, yes_no_t *refact, equed_t *equed);
+    void parse_command_line(int argc, char *argv[], int_t *nprocs, int_t *lwork, 
+		   int_t *w, int_t *relax, float *u, fact_t *fact, 
+		   trans_t *trans, yes_no_t *refact, equed_t *equed);
 
     /* Default parameters to control factorization. */
     nprocs = 1;
@@ -78,7 +77,7 @@ main(int argc, char *argv[])
 
 #if ( PRNTlevel==1 )
     cpp_defs();
-    printf("int_t %d bytes\n", sizeof(int_t));
+    printf("int_t %lu bytes\n", sizeof(int_t));
 #endif
 
 #define HB
