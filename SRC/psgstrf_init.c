@@ -1,9 +1,9 @@
 /*! \file
 Copyright (c) 2003, The Regents of the University of California, through
-Lawrence Berkeley National Laboratory (subject to receipt of any required 
-approvals from U.S. Dept. of Energy) 
+Lawrence Berkeley National Laboratory (subject to receipt of any required
+approvals from U.S. Dept. of Energy)
 
-All rights reserved. 
+All rights reserved.
 
 The source code is distributed under BSD license, see the file License.txt
 at the top-level directory.
@@ -17,7 +17,7 @@ psgstrf_init(int_t nprocs, fact_t fact, trans_t trans, yes_no_t refact,
              int_t panel_size, int_t relax,
 	     float diag_pivot_thresh, yes_no_t usepr, double drop_tol,
 	     int_t *perm_c, int_t *perm_r, void *work, int_t lwork,
-	     SuperMatrix *A, SuperMatrix *AC, 
+	     SuperMatrix *A, SuperMatrix *AC,
 	     superlumt_options_t *superlumt_options, Gstat_t *Gstat)
 {
 /*
@@ -29,12 +29,12 @@ psgstrf_init(int_t nprocs, fact_t fact, trans_t trans, yes_no_t refact,
  * Purpose
  * =======
  *
- * psgstrf_init() initializes the option structure superlumt_options, using 
+ * psgstrf_init() initializes the option structure superlumt_options, using
  * the user-input parameters. These options control how the factorization
  * will be performed by routine psgstf().
- * 
- * In addition, it calls sp_colorder() to compute a postordered etree[], 
- * colcnt_h[] and super_part_h, and permute the columns of A using the 
+ *
+ * In addition, it calls sp_colorder() to compute a postordered etree[],
+ * colcnt_h[] and super_part_h, and permute the columns of A using the
  * permutation vector perm_c[]. See sp_colorder.c for details.
  *
  * Arguments
@@ -73,12 +73,12 @@ psgstrf_init(int_t nprocs, fact_t fact, trans_t trans, yes_no_t refact,
  * drop_tol (input) double (NOT IMPLEMENTED)
  *	  Drop tolerance parameter. At step j of the Gaussian elimination,
  *        if abs(A_ij)/(max_i abs(A_ij)) < drop_tol, drop entry A_ij.
- *        0 <= drop_tol <= 1. The default value of drop_tol is 0, 
+ *        0 <= drop_tol <= 1. The default value of drop_tol is 0,
  *        corresponding to not dropping any entry.
  *
  * perm_c (input) int_t*, dimension A->ncol
- *	  Column permutation vector, which defines the 
- *        permutation matrix Pc; perm_c[i] = j means column i of A is 
+ *	  Column permutation vector, which defines the
+ *        permutation matrix Pc; perm_c[i] = j means column i of A is
  *        in position j in A*Pc.
  *        When search for diagonal, perm_c[*] is applied to the
  *        row subscripts of A, so that diagonal threshold pivoting
@@ -137,7 +137,7 @@ psgstrf_init(int_t nprocs, fact_t fact, trans_t trans, yes_no_t refact,
     superlumt_options->SymmetricMode = NO;
     superlumt_options->PrintStat = NO;
 
-    /* 
+    /*
      * The following should be retained for repeated factorizations.
      */
     superlumt_options->perm_c = perm_c;
@@ -153,6 +153,7 @@ psgstrf_init(int_t nprocs, fact_t fact, trans_t trans, yes_no_t refact,
         if ( !(superlumt_options->part_super_h = intMalloc(A->ncol)) )
 	    SUPERLU_ABORT("Malloc fails for colcnt_h[].");
     }
+    superlumt_options->nnzH = 0; /* will be filled in by sp_colorder */
 
     t = SuperLU_timer_();
     sp_colorder(A, perm_c, superlumt_options, AC);
@@ -162,4 +163,3 @@ psgstrf_init(int_t nprocs, fact_t fact, trans_t trans, yes_no_t refact,
     printf("** psgstrf_init() called\n");
 #endif
 }
-

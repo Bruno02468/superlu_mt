@@ -1,15 +1,71 @@
 /*! \file
 Copyright (c) 2003, The Regents of the University of California, through
-Lawrence Berkeley National Laboratory (subject to receipt of any required 
-approvals from U.S. Dept. of Energy) 
+Lawrence Berkeley National Laboratory (subject to receipt of any required
+approvals from U.S. Dept. of Energy)
 
-All rights reserved. 
+All rights reserved.
 
 The source code is distributed under BSD license, see the file License.txt
 at the top-level directory.
 */
 #include "slu_mt_machines.h"
 #include "slu_mt_ddefs.h"
+
+/* these can be set from Fortran, allowing MYSTRAN to control them at runtime */
+int_t param_spienv6 = 50;
+int_t param_spienv7 = 50;
+int_t param_spienv8 = 30;
+
+/* this subroutine can be called from Fortran!
+ * if the passed growth factor is non-zero, we set it.
+ */
+void slu_set_memfac_(int *parnum, int *newval) {
+	int_t *ptr = NULL;
+	switch (*parnum) {
+		case 6:
+			ptr = &param_spienv6;
+			break;
+		case 7:
+			ptr = &param_spienv7;
+			break;
+		case 8:
+			ptr = &param_spienv8;
+			break;
+		default:
+			superlu_abort_and_exit("Programmer error: invalid value passed to slu_set_memfac_!");
+			break;
+	}
+	if (ptr != NULL) {
+		if (*newval) {
+			*ptr = *newval;
+		}
+	}
+}
+
+/* this subroutine can be called from Fortran!
+ * return the growth factor corresponting to the i-th value of sp_ienv
+ */
+void slu_get_memfac_(int *parnum, int *outval) {
+	int_t *ptr = NULL;
+	switch (*parnum) {
+		case 6:
+			ptr = &param_spienv6;
+			break;
+		case 7:
+			ptr = &param_spienv7;
+			break;
+		case 8:
+			ptr = &param_spienv8;
+			break;
+		default:
+			superlu_abort_and_exit("Programmer error: invalid value passed to slu_get_memfac_!");
+			break;
+	}
+	if (ptr != NULL) {
+		*outval = *ptr;
+	}
+}
+
 
 int_t
 sp_ienv(int_t ispec)
@@ -20,23 +76,23 @@ sp_ienv(int_t ispec)
  * and Lawrence Berkeley National Lab.
  * August 15, 1997
  *
- *  Purpose   
- *  =======   
+ *  Purpose
+ *  =======
  *
  *  sp_ienv() is inquired to choose machine-dependent parameters for the
- *  local environment. See ISPEC for a description of the parameters.   
+ *  local environment. See ISPEC for a description of the parameters.
  *
- *  This version provides a set of parameters which should give good,   
- *  but not optimal, performance on many of the currently available   
- *  computers.  Users are encouraged to modify this subroutine to set   
- *  the tuning parameters for their particular machine using the option   
- *  and problem size information in the arguments.   
+ *  This version provides a set of parameters which should give good,
+ *  but not optimal, performance on many of the currently available
+ *  computers.  Users are encouraged to modify this subroutine to set
+ *  the tuning parameters for their particular machine using the option
+ *  and problem size information in the arguments.
  *
- *  Arguments   
- *  =========   
+ *  Arguments
+ *  =========
  *
  *  ISPEC   (input) int
- *          Specifies the parameter to be returned as the value of SP_IENV.   
+ *          Specifies the parameter to be returned as the value of SP_IENV.
  *          = 1: the panel size w; a panel consists of w consecutive
  *               columns of matrix A in the process of Gaussian elimination.
  *               The best value depends on machine's cache characters.
@@ -62,12 +118,12 @@ sp_ienv(int_t ispec)
  *               the product of its magnitude and the number of nonzeros in the
  *               original A will be used to allocate storage;
  *               a positive number represents the number of nonzeros;
- *   
- * (SP_IENV) (output) int
- *          >= 0: the value of the parameter specified by ISPEC   
- *          < 0:  if SP_IENV = -k, the k-th argument had an illegal value. 
  *
- *  ===================================================================== 
+ * (SP_IENV) (output) int
+ *          >= 0: the value of the parameter specified by ISPEC
+ *          < 0:  if SP_IENV = -k, the k-th argument had an illegal value.
+ *
+ *  =====================================================================
  */
     int i;
     extern int  xerbla_ (char *, int *);
@@ -80,7 +136,7 @@ sp_ienv(int_t ispec)
 	case 3: return (100);
 	case 4: return (800);
 	case 5: return (100);
-#elif ( MACH==ORIGIN ) 
+#elif ( MACH==ORIGIN )
 	case 1: return (12);
 	case 2: return (6);
 	case 3: return (100);
@@ -111,15 +167,13 @@ sp_ienv(int_t ispec)
 	case 4: return (200);
 	case 5: return (100);
 #endif
-        case 6: return (-50);
-        case 7: return (-50);
-        case 8: return (-30);
+        case 6: return (-param_spienv6);
+        case 7: return (-param_spienv7);
+        case 8: return (-param_spienv8);
     }
-
     /* Invalid value for ISPEC */
     i = 1;
     xerbla_("sp_ienv", &i);
     return 0;
 
 } /* sp_ienv_ */
-

@@ -1,9 +1,9 @@
 /*! \file
 Copyright (c) 2003, The Regents of the University of California, through
-Lawrence Berkeley National Laboratory (subject to receipt of any required 
-approvals from U.S. Dept. of Energy) 
+Lawrence Berkeley National Laboratory (subject to receipt of any required
+approvals from U.S. Dept. of Energy)
 
-All rights reserved. 
+All rights reserved.
 
 The source code is distributed under BSD license, see the file License.txt
 at the top-level directory.
@@ -14,10 +14,10 @@ at the top-level directory.
  * Lawrence Berkeley National Lab, Univ. of California Berkeley,
  * and Xerox Palo Alto Research Center.
  * September 10, 2007
- * 
- * Last modified: 
+ *
+ * Last modified:
  * -- 8/29/2013: added lock to access Stack memory supplied by user
- *   
+ *
  */
 #include "slu_mt_sdefs.h"
 
@@ -105,10 +105,10 @@ void psgstrf_SetupSpace(void *work, int_t lwork)
 void psgstrf_StackFree()
 {
 #if ( MACH==PTHREAD ) /* Use pthread ... */
-     if ( whichspace == USER ) 
+     if ( whichspace == USER )
          pthread_mutex_destroy( &stack.lock );
 #endif
-} 
+}
 
 void *suser_malloc(int_t bytes, int_t which_end)
 {
@@ -119,7 +119,7 @@ void *suser_malloc(int_t bytes, int_t which_end)
 #elif ( MACH==OPENMP ) /* Use openMP ... */
 #pragma omp critical ( STACK_LOCK )
 #endif
-    {    
+    {
         if ( StackFull(bytes) ) {
             buf = NULL;
             goto end;
@@ -133,7 +133,7 @@ void *suser_malloc(int_t bytes, int_t which_end)
 	    buf = (char*) stack.array + stack.top2;
         }
         stack.used += bytes;
-        
+
      end: ;
     } /* ---- end critical section ---- */
 
@@ -270,7 +270,7 @@ psgstrf_MemInit(int_t n, int_t annz, superlumt_options_t *superlumt_options,
     int_t      FILL_LUSUP = sp_ienv(6); /* Guess the fill-in growth for LUSUP */
     int_t      FILL_UCOL = sp_ienv(7); /* Guess the fill-in growth for UCOL */
     int_t      FILL_LSUB = sp_ienv(8); /* Guess the fill-in growth for LSUB */
-    
+
     no_expand = 0;
     ndim      = n;
     iword     = sizeof(int_t);
@@ -281,11 +281,33 @@ psgstrf_MemInit(int_t n, int_t annz, superlumt_options_t *superlumt_options,
 
     if ( refact == NO ) {
 
-	/* Guess amount of storage needed by L\U factors. */
-        if ( FILL_UCOL < 0 ) nzumax = -FILL_UCOL * annz;
-	else nzumax = FILL_UCOL;
-	if ( FILL_LSUB < 0 ) nzlmax = -FILL_LSUB * annz;
-	else nzlmax = FILL_LSUB;
+	/* Determine storage for L\U factors.
+	 *
+	 * Default path: use nnzH (total nnz of the Householder/Cholesky factor H,
+	 * computed by qrnzcnt()/cholnzcnt() in sp_colorder()) as a provably-safe
+	 * upper bound. Under partial pivoting:
+	 *   struct(L_LU) subset-of struct(H), struct(U_LU) subset-of struct(R)
+	 *                                                  subset-of struct(H).
+	 * Per-supernode LSUB allocation is 2 * |L[*,fsupc]| (subscripts plus
+	 * the pruned-graph copy), so worst-case total LSUB = 2 * nnzH.
+	 *
+	 * Legacy path (env var SUPERLU_MT_USE_LEGACY_FILL set, or nnzH unavailable):
+	 * fall back to the old sp_ienv(7,8) multipliers.
+	 */
+	{
+	    int_t nnzH = superlumt_options->nnzH;
+	    int_t use_legacy = (nnzH <= 0) ||
+		(getenv("SUPERLU_MT_USE_LEGACY_FILL") != NULL);
+	    if ( use_legacy ) {
+		if ( FILL_UCOL < 0 ) nzumax = -FILL_UCOL * annz;
+		else nzumax = FILL_UCOL;
+		if ( FILL_LSUB < 0 ) nzlmax = -FILL_LSUB * annz;
+		else nzlmax = FILL_LSUB;
+	    } else {
+		nzumax = nnzH;       /* |U_LU| <= |R| <= |H| */
+		nzlmax = 2 * nnzH;   /* L subscripts + pruned copy per supernode */
+	    }
+	}
 
 	if ( Glu->dynamic_snode_bound == YES ) {
 	    if ( FILL_LUSUP < 0 ) nzlumax = -FILL_LUSUP * annz;
@@ -295,13 +317,13 @@ psgstrf_MemInit(int_t n, int_t annz, superlumt_options_t *superlumt_options,
 	}
 
 	if ( lwork == -1 ) {
-	    return (GluIntArray(n) * iword + 
+	    return (GluIntArray(n) * iword +
 		    superlu_sTempSpace(n, panel_size, nprocs)
 		    + (nzlmax+nzumax)*iword + (nzlumax+nzumax)*dword);
         } else {
 	    psgstrf_SetupSpace(work, lwork);
 	}
-	
+
 	/* Integer pointers for L\U factors */
 	if ( whichspace == SYSTEM ) {
 	    xsup       = intMalloc(n+1);
@@ -352,7 +374,7 @@ psgstrf_MemInit(int_t n, int_t annz, superlumt_options_t *superlumt_options,
 	    lsub  = (int_t *)  psgstrf_expand( &nzlmax, LSUB, 0, 0, Glu );
 	    usub  = (int_t *)  psgstrf_expand( &nzumax, USUB, 0, 1, Glu );
 	}
-	
+
 	if ( !lusup )  {
 	    float t = psgstrf_memory_use(nzlmax, nzumax, nzlumax) + n;
 	    printf("Not enough memory to perform factorization .. "
@@ -360,7 +382,7 @@ psgstrf_MemInit(int_t n, int_t annz, superlumt_options_t *superlumt_options,
 	    fflush(stdout);
 	    return (t);
 	}
-	
+
     } else { /* refact == YES */
 	Lstore   = L->Store;
 	Ustore   = U->Store;
@@ -376,7 +398,7 @@ psgstrf_MemInit(int_t n, int_t annz, superlumt_options_t *superlumt_options,
 	nzlmax   = Glu->nzlmax;    /* max from previous factorization */
 	nzumax   = Glu->nzumax;
 	nzlumax  = Glu->nzlumax;
-	
+
 	if ( lwork == -1 ) {
 	    return (GluIntArray(n) * iword + superlu_sTempSpace(n, panel_size, nprocs)
 		    + (nzlmax+nzumax)*iword + (nzlumax+nzumax)*dword);
@@ -387,7 +409,7 @@ psgstrf_MemInit(int_t n, int_t annz, superlumt_options_t *superlumt_options,
 	    stack.size = lwork;
 	    stack.top2 = lwork;
 	}
-	
+
 	lsub  = sexpanders[LSUB].mem  = Lstore->rowind;
 	lusup = sexpanders[LUSUP].mem = Lstore->nzval;
 	usub  = sexpanders[USUB].mem  = Ustore->rowind;
@@ -396,7 +418,7 @@ psgstrf_MemInit(int_t n, int_t annz, superlumt_options_t *superlumt_options,
 	sexpanders[LSUB].size         = nzlmax;
 	sexpanders[LUSUP].size        = nzlumax;
 	sexpanders[USUB].size         = nzumax;
-	sexpanders[UCOL].size         = nzumax;	
+	sexpanders[UCOL].size         = nzumax;
     }
 
     Glu->xsup       = xsup;
@@ -426,10 +448,10 @@ psgstrf_MemInit(int_t n, int_t annz, superlumt_options_t *superlumt_options,
 #endif
 
     return 0;
-    
+
 } /* psgstrf_MemInit */
 
-/* 
+/*
  * Allocate known working storage. Returns 0 if success, otherwise
  * returns the number of bytes allocated so far when failure occurred.
  */
@@ -444,8 +466,8 @@ psgstrf_WorkInit(int_t n, int_t panel_size, int_t **iworkptr, float **dworkptr)
     isize = (2*panel_size + 5 + NO_MARKER) * n * sizeof(int_t);
     dsize = (n * panel_size +
 	     NUM_TEMPV(n,panel_size,maxsuper,rowblk)) * sizeof(float);
-    
-    if ( whichspace == SYSTEM ) 
+
+    if ( whichspace == SYSTEM )
 	*iworkptr = (int_t *) intCalloc(isize/sizeof(int_t));
     else
 	*iworkptr = (int_t *) suser_malloc(isize, TAIL);
@@ -465,7 +487,7 @@ psgstrf_WorkInit(int_t n, int_t panel_size, int_t **iworkptr, float **dworkptr)
 	        extra = (char*)old_ptr - (char*)*dworkptr;
 #if ( DEBUGlevel>=1 )
 	        printf("psgstrf_WorkInit: not aligned, extra" IFMT "\n", extra);
-#endif	    
+#endif
 #if ( MACH==PTHREAD ) /* Use pthread ... */
         pthread_mutex_lock( &stack.lock );
 #elif ( MACH==OPENMP ) /* Use openMP ... */
@@ -484,7 +506,7 @@ psgstrf_WorkInit(int_t n, int_t panel_size, int_t **iworkptr, float **dworkptr)
 	printf("malloc fails for local dworkptr[] ... dsize " IFMT "\n", dsize);
 	return (isize + dsize + n);
     }
-	
+
     return 0;
 }
 
@@ -503,9 +525,9 @@ psgstrf_SetRWork(int_t n, int_t panel_size, float *dworkptr,
     *dense = dworkptr;
     *tempv = *dense + panel_size*n;
     sfill (*dense, n * panel_size, zero);
-    sfill (*tempv, NUM_TEMPV(n,panel_size,maxsuper,rowblk), zero);     
+    sfill (*tempv, NUM_TEMPV(n,panel_size,maxsuper,rowblk), zero);
 }
-	
+
 /*
  * Free the working storage used by factor routines.
  */
@@ -523,7 +545,7 @@ void psgstrf_WorkFree(int_t *iwork, float *dwork, GlobalLU_t *Glu)
         {
 	    stack.used -= (stack.size - stack.top2);
 	    stack.top2 = stack.size;
-	    
+
 	    /*	psgstrf_StackCompress(Glu);  */
         }
 #if ( MACH==PTHREAD ) /* Use pthread ... */
@@ -532,7 +554,7 @@ void psgstrf_WorkFree(int_t *iwork, float *dwork, GlobalLU_t *Glu)
     }
 }
 
-/* 
+/*
  * Expand the data structures for L and U during the factorization.
  * Return value:   0 - successful return
  *               > 0 - number of bytes allocated when run out of space
@@ -551,17 +573,17 @@ psgstrf_MemXpand(
 		 )
 {
     void   *new_mem;
-    
-#ifdef CHK_EXPAND    
+
+#ifdef CHK_EXPAND
     printf("psgstrf_MemXpand(): jcol " IFMT ", next " IFMT ", maxlen " IFMT ", MemType " IFMT "\n",
 	   jcol, next, *maxlen, mem_type);
-#endif    
+#endif
 
-    if (mem_type == USUB) 
+    if (mem_type == USUB)
     	new_mem = psgstrf_expand(maxlen, mem_type, next, 1, Glu);
     else
 	new_mem = psgstrf_expand(maxlen, mem_type, next, 0, Glu);
-    
+
     if ( !new_mem ) {
 	int_t    nzlmax  = Glu->nzlmax;
 	int_t    nzumax  = Glu->nzumax;
@@ -589,9 +611,9 @@ psgstrf_MemXpand(
 	Glu->nzumax = *maxlen;
 	break;
     }
-    
+
     return 0;
-    
+
 }
 
 
@@ -741,7 +763,7 @@ void
     if ( no_expand ) ++no_expand;
 
     return (void *) sexpanders[type].mem;
-  
+
 } /* expand */
 
 
@@ -757,7 +779,7 @@ psgstrf_StackCompress(GlobalLU_t *Glu)
     float   *dfrom, *dto;
     int_t      *xlsub, *lsub, *xusub_end, *usub, *xlusup;
     float   *ucol, *lusup;
-    
+
     iword = sizeof(int_t);
     dword = sizeof(float);
 
@@ -768,7 +790,7 @@ psgstrf_StackCompress(GlobalLU_t *Glu)
     xlusup = Glu->xlusup;
     ucol   = Glu->ucol;
     lusup  = Glu->lusup;
-    
+
     dfrom = ucol;
     dto = (float *)((char*)lusup + xlusup[ndim] * dword);
     copy_mem_float(xusub_end[ndim-1], dfrom, dto);
@@ -778,12 +800,12 @@ psgstrf_StackCompress(GlobalLU_t *Glu)
     ito = (int_t *) ((char*)ucol + xusub_end[ndim-1] * iword);
     copy_mem_int(xlsub[ndim], ifrom, ito);
     lsub = ito;
-    
+
     ifrom = usub;
     ito = (int_t *) ((char*)lsub + xlsub[ndim] * iword);
     copy_mem_int(xusub_end[ndim-1], ifrom, ito);
     usub = ito;
-    
+
     last = (char*)usub + xusub_end[ndim-1] * iword;
     fragment = (char*) ((char*)stack.array + stack.top1 - last);
     stack.used -= (long long int) fragment;
@@ -792,14 +814,14 @@ psgstrf_StackCompress(GlobalLU_t *Glu)
     Glu->ucol = ucol;
     Glu->lsub = lsub;
     Glu->usub = usub;
-    
+
 #ifdef CHK_EXPAND
     printf("psgstrf_StackCompress: fragment " IFMT "\n", fragment);
     /* PrintStack("After compress", Glu);
     for (last = 0; last < ndim; ++last)
 	print_lu_col("After compress:", last, 0);*/
-#endif    
-    
+#endif
+
 }
 
 
@@ -817,7 +839,7 @@ sallocateA(int_t n, int_t nnz, float **a, int_t **asub, int_t **xa)
 float *floatMalloc(int_t n)
 {
     float *buf;
-    buf = (float *) SUPERLU_MALLOC( (size_t) n * sizeof(float) ); 
+    buf = (float *) SUPERLU_MALLOC( (size_t) n * sizeof(float) );
     if ( !buf ) {
 	fprintf(stderr, "SUPERLU_MALLOC failed for buf in floatMalloc()");
 	exit (1);
@@ -840,10 +862,10 @@ float *floatCalloc(int_t n)
 }
 
 /*
- * Set up memory image in lusup[*], using the supernode boundaries in 
+ * Set up memory image in lusup[*], using the supernode boundaries in
  * the Householder matrix.
- * 
- * In both static and dynamic scheme, the relaxed supernodes (leaves) 
+ *
+ * In both static and dynamic scheme, the relaxed supernodes (leaves)
  * are stored in the beginning of lusup[*]. In the static scheme, the
  * memory is also set aside for the internal supernodes using upper
  * bound information from H. In the dynamic scheme, however, the memory
@@ -851,7 +873,7 @@ float *floatCalloc(int_t n)
  *
  * Return value
  *   o Static scheme: number of nonzeros of all the supernodes in H.
- *   o Dynamic scheme: number of nonzeros of the relaxed supernodes. 
+ *   o Dynamic scheme: number of nonzeros of the relaxed supernodes.
  */
 int_t
 sPresetMap(
@@ -907,7 +929,7 @@ sPresetMap(
 	}
 	j = k;
     }
-    
+
     for (j = 0; j < n; j += w) {
         if ( Glu->dynamic_snode_bound == NO ) map_in_sup[j] = nextpos;
 
@@ -919,7 +941,7 @@ sPresetMap(
 	    rs_lastcol = j + w;
 	    for (i = j; i < rs_lastcol; ++i) {
 		/* for each nonzero in A[*,i] */
-		for (k = xa_begin[i]; k < xa_end[i]; k++) {	
+		for (k = xa_begin[i]; k < xa_end[i]; k++) {
 		    krow = asub[k];
 		    kmark = marker[krow];
 		    if ( kmark != j ) { /* first time visit krow */
@@ -929,7 +951,7 @@ sPresetMap(
 		}
 	    }
 	    nextpos += w * rs_nrow;
-	    
+
 	    /* Find the next H-supernode, with leading column i, which is
 	       outside the relaxed supernode, rs. */
 	    for (i = j; i < rs_lastcol; k = i, i += super_bnd[i]);
@@ -947,9 +969,9 @@ sPresetMap(
 	}
 
 	/* Set up the offset (negative) to the leading column j of a
-	   supernode in H */ 
+	   supernode in H */
 	for (i = 1; i < w; ++i) map_in_sup[j + i] = -i;
-	
+
     } /* for j ... */
 
     if ( Glu->dynamic_snode_bound == YES ) Glu->nextlu = nextpos;
@@ -962,6 +984,3 @@ sPresetMap(
     free (marker);
     return nextpos;
 }
-
-
-

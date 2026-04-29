@@ -2,3 +2,22 @@
 
 .dropbox.attr
 
+*.o
+*.a
+
+# CMake build trees
+build/
+build_*/
+
+# Built libraries
+lib/*.a
+lib/*.so
+lib/*.dylib
+
+# Built example drivers
+EXAMPLE/p[sdcz]linsol
+EXAMPLE/p[sdcz]linsolx
+EXAMPLE/p[sdcz]linsolx1
+EXAMPLE/p[sdcz]linsolx2
+EXAMPLE/p[sdcz]repeat
+EXAMPLE/p[sdcz]spmd

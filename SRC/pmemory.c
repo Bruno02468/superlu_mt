@@ -1,9 +1,9 @@
 /*! \file
 Copyright (c) 2003, The Regents of the University of California, through
-Lawrence Berkeley National Laboratory (subject to receipt of any required 
-approvals from U.S. Dept. of Energy) 
+Lawrence Berkeley National Laboratory (subject to receipt of any required
+approvals from U.S. Dept. of Energy)
 
-All rights reserved. 
+All rights reserved.
 
 The source code is distributed under BSD license, see the file License.txt
 at the top-level directory.
@@ -22,7 +22,7 @@ at the top-level directory.
 #define XPAND_HINT(memtype, new_next, jcol, param) {\
 fprintf(stderr, "Storage for %12s exceeded; Current column " IFMT "; Need at least " IFMT ";\n",\
 	memtype, jcol, new_next); \
-fprintf(stderr, "You may set it by the %d-th parameter in routine sp_ienv().\n", param); \
+fprintf(stderr, "Try increasing the corresponding SuperLU_MT memory growth factor via the SPIENV%d PARAM.\nThe current value of SPIENV%d is %d. Sorry!\n", param, param, -sp_ienv(param)); \
 SUPERLU_ABORT("Memory allocation failed"); \
 }
 
@@ -123,10 +123,10 @@ Glu_alloc(
 #ifdef PROFILE
     double   t;
 #endif
-    
+
     switch ( mem_type ) {
-	
-      case LUSUP: 
+
+      case LUSUP:
 	/* Storage for the H-supernode is already set aside, so we do
 	   not use lock here. */
 	if ( Glu->map_in_sup[jcol] < 0 )
@@ -146,30 +146,30 @@ Glu_alloc(
 		for (i = fsupc+1; Glu->map_in_sup[i] < 0; ++i) ;
 		new_next = Glu->map_in_sup[i];
 	    }
-	    if ( Glu->map_in_sup[fsupc]>Glu->nzlumax 
+	    if ( Glu->map_in_sup[fsupc]>Glu->nzlumax
 		|| Glu->map_in_sup[fsupc]>new_next ) {
 		printf("(" IFMT ") jcol " IFMT ", map_[" IFMT "]=" IFMT ", map_[" IFMT "]=new_next " IFMT "\n",
 		       pnum, jcol, fsupc, Glu->map_in_sup[fsupc],
 		       i, new_next);
 		printf("(" IFMT ") snode type " IFMT ",size " IFMT ", |H-snode| " IFMT "\n",
-		       pnum, Glu->pan_status[fsupc].type, 
+		       pnum, Glu->pan_status[fsupc].type,
 		       Glu->pan_status[fsupc].size, part_super_h[fsupc]);
 		for (j = fsupc; j < i; j += part_super_h[j])
 		    printf("(" IFMT ") H snode " IFMT ", size " IFMT "\n",
 			   pnum, j, part_super_h[j]);
 		SUPERLU_ABORT("LUSUP exceeded.");  /* xiaoye */
 	    }
-	}	    
-#endif	
+	}
+#endif
 	break;
 
-	
+
       case UCOL: case USUB:
 
 #ifdef PROFILE
 	t = SuperLU_timer_();
 #endif
-	
+
 #if ( MACH==SUN )
 	mutex_lock( &pxgstrf_shared->lu_locks[ULOCK] );
 #elif ( MACH==DEC || MACH==PTHREAD )
@@ -180,7 +180,7 @@ Glu_alloc(
 #pragma _CRI guard ULOCK
 #elif ( MACH==OPENMP )
 #pragma omp critical (ULOCK)
-#endif	
+#endif
 	{
 	    nextu = Glu->nextu;
 	    new_next = nextu + num;
@@ -191,7 +191,7 @@ Glu_alloc(
 	    Glu->nextu = new_next;
 
 	} /* end of critical region */
-	
+
 #if ( MACH==SUN )
 	mutex_unlock( &pxgstrf_shared->lu_locks[ULOCK] );
 #elif ( MACH==DEC || MACH==PTHREAD )
@@ -203,16 +203,16 @@ Glu_alloc(
 #ifdef PROFILE
 	Gstat->procstat[pnum].cs_time += SuperLU_timer_() - t;
 #endif
-	
+
 	break;
 
-	
+
 	case LSUB:
 
 #ifdef PROFILE
 	t = SuperLU_timer_();
 #endif
-	
+
 #if ( MACH==SUN )
 	mutex_lock( &pxgstrf_shared->lu_locks[LLOCK] );
 #elif ( MACH==DEC || MACH==PTHREAD )
@@ -223,7 +223,7 @@ Glu_alloc(
 #pragma _CRI guard LLOCK
 #elif ( MACH==OPENMP )
 #pragma omp critical (LLOCK)
-#endif	
+#endif
 	{
 	  nextl = Glu->nextl;
 	  new_next = nextl + num;
@@ -232,25 +232,25 @@ Glu_alloc(
 	  }
 	  *prev_next = nextl;
 	  Glu->nextl = new_next;
-	  
+
 	} /* end of #pragama critical lock() */
-	
+
 #if ( MACH==SUN )
 	mutex_unlock( &pxgstrf_shared->lu_locks[LLOCK] );
 #elif ( MACH==DEC || MACH==PTHREAD )
 	pthread_mutex_unlock( &pxgstrf_shared->lu_locks[LLOCK]);
 #elif ( MACH==CRAY_PVP )
 #pragma _CRI endguard LLOCK
-#endif	
+#endif
 
 #ifdef PROFILE
 	Gstat->procstat[pnum].cs_time += SuperLU_timer_() - t;
 #endif
-	
+
 	  break;
 
     }
-    
+
     return 0;
 }
 
@@ -270,7 +270,7 @@ DynamicSetMap(
     Gstat_t    *Gstat = pxgstrf_shared->Gstat;
     register int_t nextlu, new_next;
     int_t *map_in_sup = Glu->map_in_sup; /* modified; memory mapping function */
-    
+
 #ifdef PROFILE
     double t = SuperLU_timer_();
 #endif
@@ -310,4 +310,3 @@ DynamicSetMap(
 
     return 0;
 }
-

@@ -1,9 +1,9 @@
 /*! \file
 Copyright (c) 2003, The Regents of the University of California, through
-Lawrence Berkeley National Laboratory (subject to receipt of any required 
-approvals from U.S. Dept. of Energy) 
+Lawrence Berkeley National Laboratory (subject to receipt of any required
+approvals from U.S. Dept. of Energy)
 
-All rights reserved. 
+All rights reserved.
 
 The source code is distributed under BSD license, see the file License.txt
 at the top-level directory.
@@ -18,7 +18,7 @@ at the top-level directory.
 int_t
 qrnzcnt(int_t neqns, int_t adjlen, int_t *xadj, int_t *adjncy, int_t *zfdperm,
 	int_t *perm, int_t *invp, int_t *etpar, int_t *colcnt_h,
-	int_t *nlnz, int_t *part_super_ata, int_t *part_super_h)
+	int_t *nlnz, int_t *nhnz_out, int_t *part_super_ata, int_t *part_super_h)
 {
 /*
      o 5/20/95 Xiaoye S. Li:
@@ -39,86 +39,86 @@ qrnzcnt(int_t neqns, int_t adjlen, int_t *xadj, int_t *adjncy, int_t *zfdperm,
      o 1/16/96 Xiaoye S. Li:
          Modified to incorporate row/column counts of the Householder
 	 Matrix H in the QR factorization A --> H , R.
-	 
+
 	 Record supernode partition in part_super_h[*] of size neqns:
 	   part_super_h[k] = size of the supernode beginning at column k;
  	                   = 0, elsewhere.
-	 
-   ***********************************************************************   
-     Version:        0.3   
-     Last modified:  January 12, 1995   
-     Authors:        Esmond G. Ng and Barry W. Peyton   
 
-     Mathematical Sciences Section, Oak Ridge National Laboratoy   
+   ***********************************************************************
+     Version:        0.3
+     Last modified:  January 12, 1995
+     Authors:        Esmond G. Ng and Barry W. Peyton
 
-   ***********************************************************************   
-   **************     FCNTHN  ..... FIND NONZERO COUNTS    ***************   
-   ***********************************************************************   
+     Mathematical Sciences Section, Oak Ridge National Laboratoy
 
-     PURPOSE:   
-         THIS SUBROUTINE DETERMINES THE ROW COUNTS AND COLUMN COUNTS IN   
-         THE CHOLESKY FACTOR.  IT USES A DISJOINT SET UNION ALGORITHM.   
+   ***********************************************************************
+   **************     FCNTHN  ..... FIND NONZERO COUNTS    ***************
+   ***********************************************************************
 
-         TECHNIQUES:   
-         1) SUPERNODE DETECTION.   
-         2) PATH HALVING.   
-         3) NO UNION BY RANK.   
+     PURPOSE:
+         THIS SUBROUTINE DETERMINES THE ROW COUNTS AND COLUMN COUNTS IN
+         THE CHOLESKY FACTOR.  IT USES A DISJOINT SET UNION ALGORITHM.
 
-     NOTES:   
-         1) ASSUMES A POSTORDERING OF THE ELIMINATION TREE.   
+         TECHNIQUES:
+         1) SUPERNODE DETECTION.
+         2) PATH HALVING.
+         3) NO UNION BY RANK.
 
-     INPUT PARAMETERS:   
-         (I) NEQNS       -   NUMBER OF EQUATIONS.   
-         (I) ADJLEN      -   LENGTH OF ADJACENCY STRUCTURE.   
-         (I) XADJ(*)     -   ARRAY OF LENGTH NEQNS+1, CONTAINING POINTERS   
+     NOTES:
+         1) ASSUMES A POSTORDERING OF THE ELIMINATION TREE.
+
+     INPUT PARAMETERS:
+         (I) NEQNS       -   NUMBER OF EQUATIONS.
+         (I) ADJLEN      -   LENGTH OF ADJACENCY STRUCTURE.
+         (I) XADJ(*)     -   ARRAY OF LENGTH NEQNS+1, CONTAINING POINTERS
                              TO THE ADJACENCY STRUCTURE.
-         (I) ADJNCY(*)   -   ARRAY OF LENGTH ADJLEN, CONTAINING   
+         (I) ADJNCY(*)   -   ARRAY OF LENGTH ADJLEN, CONTAINING
                              THE ADJACENCY STRUCTURE.
          (I) ZFDPERM(*)  -   THE ROW PERMUTATION VECTOR THAT PERMUTES THE
 	                     MATRIX TO HAVE ZERO-FREE DIAGONAL.
 			     ZFDPERM(I) = J MEANS ROW I OF THE ORIGINAL
 			     MATRIX IS IN ROW J OF THE PERMUTED MATRIX.
-         (I) PERM(*)     -   ARRAY OF LENGTH NEQNS, CONTAINING THE   
-                             POSTORDERING.   
-         (I) INVP(*)     -   ARRAY OF LENGTH NEQNS, CONTAINING THE   
-                             INVERSE OF THE POSTORDERING.   
-         (I) ETPAR(*)    -   ARRAY OF LENGTH NEQNS, CONTAINING THE   
-                             ELIMINATION TREE OF THE POSTORDERED MATRIX.   
+         (I) PERM(*)     -   ARRAY OF LENGTH NEQNS, CONTAINING THE
+                             POSTORDERING.
+         (I) INVP(*)     -   ARRAY OF LENGTH NEQNS, CONTAINING THE
+                             INVERSE OF THE POSTORDERING.
+         (I) ETPAR(*)    -   ARRAY OF LENGTH NEQNS, CONTAINING THE
+                             ELIMINATION TREE OF THE POSTORDERED MATRIX.
 
-     OUTPUT PARAMETERS:   
-         (I) ROWCNT(*)   -   ARRAY OF LENGTH NEQNS, CONTAINING THE NUMBER   
-                             OF NONZEROS IN EACH ROW OF THE FACTOR,   
-                             INCLUDING THE DIAGONAL ENTRY.   
-         (I) COLCNT(*)   -   ARRAY OF LENGTH NEQNS, CONTAINING THE NUMBER   
-                             OF NONZEROS IN EACH COLUMN OF THE FACTOR,   
-                             INCLUDING THE DIAGONAL ENTRY.   
-         (I) NLNZ        -   NUMBER OF NONZEROS IN THE FACTOR, INCLUDING   
+     OUTPUT PARAMETERS:
+         (I) ROWCNT(*)   -   ARRAY OF LENGTH NEQNS, CONTAINING THE NUMBER
+                             OF NONZEROS IN EACH ROW OF THE FACTOR,
+                             INCLUDING THE DIAGONAL ENTRY.
+         (I) COLCNT(*)   -   ARRAY OF LENGTH NEQNS, CONTAINING THE NUMBER
+                             OF NONZEROS IN EACH COLUMN OF THE FACTOR,
+                             INCLUDING THE DIAGONAL ENTRY.
+         (I) NLNZ        -   NUMBER OF NONZEROS IN THE FACTOR, INCLUDING
                              THE DIAGONAL ENTRIES.
          (I) PART_SUPER_ATA  SUPERNODE PARTITION IN THE CHOLESKY FACTOR
 	                     OF A'A.
 	 (I) PART_SUPER_H    SUPERNODE PARTITION IN THE HOUSEHOLDER
 	                     MATRIX H.
 
-     WORK PARAMETERS:   
-         (I) SET(*)      -   ARRAY OF LENGTH NEQNS USED TO MAINTAIN THE   
-                             DISJOINT SETS (I.E., SUBTREES).   
-         (I) PRVLF(*)    -   ARRAY OF LENGTH NEQNS USED TO RECORD THE   
-                             PREVIOUS LEAF OF EACH ROW SUBTREE.   
-         (I) LEVEL(*)    -   ARRAY OF LENGTH NEQNS+1 CONTAINING THE LEVEL   
-                             (DISTANCE FROM THE ROOT).   
-         (I) WEIGHT(*)   -   ARRAY OF LENGTH NEQNS+1 CONTAINING WEIGHTS   
-                             USED TO COMPUTE COLUMN COUNTS.   
-         (I) FDESC(*)    -   ARRAY OF LENGTH NEQNS+1 CONTAINING THE   
-                             FIRST (I.E., LOWEST-NUMBERED) DESCENDANT.   
-         (I) NCHILD(*)   -   ARRAY OF LENGTH NEQNS+1 CONTAINING THE   
-                             NUMBER OF CHILDREN.   
-         (I) PRVNBR(*)   -   ARRAY OF LENGTH NEQNS USED TO RECORD THE   
-                             PREVIOUS ``LOWER NEIGHBOR'' OF EACH NODE.   
+     WORK PARAMETERS:
+         (I) SET(*)      -   ARRAY OF LENGTH NEQNS USED TO MAINTAIN THE
+                             DISJOINT SETS (I.E., SUBTREES).
+         (I) PRVLF(*)    -   ARRAY OF LENGTH NEQNS USED TO RECORD THE
+                             PREVIOUS LEAF OF EACH ROW SUBTREE.
+         (I) LEVEL(*)    -   ARRAY OF LENGTH NEQNS+1 CONTAINING THE LEVEL
+                             (DISTANCE FROM THE ROOT).
+         (I) WEIGHT(*)   -   ARRAY OF LENGTH NEQNS+1 CONTAINING WEIGHTS
+                             USED TO COMPUTE COLUMN COUNTS.
+         (I) FDESC(*)    -   ARRAY OF LENGTH NEQNS+1 CONTAINING THE
+                             FIRST (I.E., LOWEST-NUMBERED) DESCENDANT.
+         (I) NCHILD(*)   -   ARRAY OF LENGTH NEQNS+1 CONTAINING THE
+                             NUMBER OF CHILDREN.
+         (I) PRVNBR(*)   -   ARRAY OF LENGTH NEQNS USED TO RECORD THE
+                             PREVIOUS ``LOWER NEIGHBOR'' OF EACH NODE.
 
-     FIRST CREATED ON    APRIL 12, 1990.   
-     LAST UPDATED ON     JANUARY 12, 1995.   
+     FIRST CREATED ON    APRIL 12, 1990.
+     LAST UPDATED ON     JANUARY 12, 1995.
 
-   ***********************************************************************   
+   ***********************************************************************
 */
 
     /* Local variables */
@@ -139,16 +139,16 @@ qrnzcnt(int_t neqns, int_t adjlen, int_t *xadj, int_t *adjncy, int_t *zfdperm,
        FIRST set is defined as first[j] := { i : f[i] = j } ,
        which is a collection of disjoint sets of integers between
        0 and n-1.
-       ---------------------------------------------------------- */    
+       ---------------------------------------------------------- */
     int_t  *first;    /* header pointing to FIRST set */
     int_t  *firstset; /* linked list to describe FIRST set */
     int_t  *weight_h; /* weights for H */
-    int_t  *rowcnt;   /* row colunts for Lc */ 
-    int_t  *colcnt;   /* column colunts for Lc */ 
-    int_t  *rowcnt_h; /* row colunts for H */ 
+    int_t  *rowcnt;   /* row colunts for Lc */
+    int_t  *colcnt;   /* column colunts for Lc */
+    int_t  *rowcnt_h; /* row colunts for H */
     int_t  nsuper;    /* total number of fundamental supernodes in Lc */
     int_t  nhnz;
-    
+
     set    = intMalloc(neqns);
     prvlf  = intMalloc(neqns);
     level  = intMalloc(neqns + 1);    /* length n+1 */
@@ -161,14 +161,14 @@ qrnzcnt(int_t neqns, int_t adjlen, int_t *xadj, int_t *adjncy, int_t *zfdperm,
     hadj_end   = hadj_begin + neqns + 1;   /* neqns */
     fnz        = set;    /* aliasing for the time being */
     marker     = prvlf;  /*     "    "    "             */
-    
+
     first    = intMalloc(neqns);
     firstset = intMalloc(neqns);
     weight_h = intCalloc(neqns + 1);  /* length n+1 */
     rowcnt_h = intMalloc(neqns);
     rowcnt   = intMalloc(neqns);
     colcnt   = intMalloc(neqns);
-    
+
     /* -------------------------------------------------------
      * Compute fnz[*], first[*], nchild[*] and row counts of A.
      * Also find supernodes in H.
@@ -224,7 +224,7 @@ qrnzcnt(int_t neqns, int_t adjlen, int_t *xadj, int_t *adjncy, int_t *zfdperm,
     for (k = 0; k < neqns; ++k)
 	printf("%8d%8d%8d\n", k, fnz[k], first[k]);
 #endif
-    
+
     /* Set up fnz_hadj[*] structure. */
     hadj_begin[0] = 0;
     for (k = 0; k < neqns; ++k) {
@@ -257,11 +257,11 @@ qrnzcnt(int_t neqns, int_t adjlen, int_t *xadj, int_t *adjncy, int_t *zfdperm,
 	printf("\n");
     }
 #endif
-	
-    /*   --------------------------------------------------   
-         COMPUTE LEVEL(*), FDESC(*), NCHILD(*).   
-         INITIALIZE ROWCNT(*), COLCNT(*),   
-                    SET(*), PRVLF(*), WEIGHT(*), PRVNBR(*).   
+
+    /*   --------------------------------------------------
+         COMPUTE LEVEL(*), FDESC(*), NCHILD(*).
+         INITIALIZE ROWCNT(*), COLCNT(*),
+                    SET(*), PRVLF(*), WEIGHT(*), PRVNBR(*).
          --------------------------------------------------   */
     level[ROOT] = 0;
     for (k = neqns-1; k >= 0; --k) {
@@ -287,9 +287,9 @@ qrnzcnt(int_t neqns, int_t adjlen, int_t *xadj, int_t *adjncy, int_t *zfdperm,
 
     xsup    = 0;      /* BUG FIX */
     nsuper = 0;
-    
-    /*   ------------------------------------   
-         FOR EACH ``LOW NEIGHBOR'' LOWNBR ...   
+
+    /*   ------------------------------------
+         FOR EACH ``LOW NEIGHBOR'' LOWNBR ...
          ------------------------------------ */
     for (lownbr = 0; lownbr < neqns; ++lownbr) {
 	for (i = first[lownbr]; i != EMPTY; i = firstset[i]) {
@@ -298,38 +298,38 @@ qrnzcnt(int_t neqns, int_t adjlen, int_t *xadj, int_t *adjncy, int_t *zfdperm,
 	    parent = etpar[i];
 	    --weight_h[parent];
 	}
-	
+
 	lflag  = 0;
 	ifdesc = fdesc[lownbr];
 	jstrt  = hadj_begin[lownbr];
 	jstop  = hadj_end[lownbr];
-	/*   -----------------------------------------------   
-             FOR EACH ``HIGH NEIGHBOR'', HINBR OF LOWNBR ...   
+	/*   -----------------------------------------------
+             FOR EACH ``HIGH NEIGHBOR'', HINBR OF LOWNBR ...
              ----------------------------------------------- */
-	for (j = jstrt; j < jstop; ++j) {	    
+	for (j = jstrt; j < jstop; ++j) {
 	    hinbr = fnz_hadj[j];
 	    if (hinbr > lownbr) {
                 if (ifdesc > prvnbr[hinbr]) {
-		    /*  -------------------------   
-			INCREMENT WEIGHT(LOWNBR).   
+		    /*  -------------------------
+			INCREMENT WEIGHT(LOWNBR).
 			------------------------- */
 		    ++weight[lownbr];
 		    pleaf = prvlf[hinbr];
-		    /*  -----------------------------------------   
-			IF HINBR HAS NO PREVIOUS ``LOW NEIGHBOR'' THEN ...   
+		    /*  -----------------------------------------
+			IF HINBR HAS NO PREVIOUS ``LOW NEIGHBOR'' THEN ...
 			----------------------------------------- */
 		    if (pleaf == EMPTY) {
-			/* -----------------------------------------   
-			   ... ACCUMULATE LOWNBR-->HINBR PATH LENGTH   
-			       IN ROWCNT(HINBR).   
+			/* -----------------------------------------
+			   ... ACCUMULATE LOWNBR-->HINBR PATH LENGTH
+			       IN ROWCNT(HINBR).
 			   ----------------------------------------- */
 			rowcnt[hinbr] = rowcnt[hinbr] +
 			                level[lownbr] - level[hinbr];
 		    } else {
-			/* -----------------------------------------   
-			   ... OTHERWISE, LCA <-- FIND(PLEAF), WHICH   
-                               IS THE LEAST COMMON ANCESTOR OF PLEAF   
-                               AND LOWNBR. (PATH HALVING.)   
+			/* -----------------------------------------
+			   ... OTHERWISE, LCA <-- FIND(PLEAF), WHICH
+                               IS THE LEAST COMMON ANCESTOR OF PLEAF
+                               AND LOWNBR. (PATH HALVING.)
 			   ----------------------------------------- */
 			last1 = pleaf;
 			last2 = set[last1];
@@ -340,30 +340,30 @@ qrnzcnt(int_t neqns, int_t adjlen, int_t *xadj, int_t *adjncy, int_t *zfdperm,
 			    last2 = set[last1];
 			    lca = set[last2];
 			}
-			/* -------------------------------------   
-			   ACCUMULATE PLEAF-->LCA PATH LENGTH IN   
-			   ROWCNT(HINBR). DECREMENT WEIGHT(LCA).   
+			/* -------------------------------------
+			   ACCUMULATE PLEAF-->LCA PATH LENGTH IN
+			   ROWCNT(HINBR). DECREMENT WEIGHT(LCA).
 			   ------------------------------------- */
-			rowcnt[hinbr] = rowcnt[hinbr] + 
+			rowcnt[hinbr] = rowcnt[hinbr] +
 					level[lownbr] - level[lca];
 			--weight[lca];
 		    }
-		    /* ----------------------------------------------   
-		       LOWNBR NOW BECOMES ``PREVIOUS LEAF'' OF HINBR.   
+		    /* ----------------------------------------------
+		       LOWNBR NOW BECOMES ``PREVIOUS LEAF'' OF HINBR.
 		       ---------------------------------------------- */
 		    prvlf[hinbr] = lownbr;
 		    lflag = 1;
         	}
-		/* --------------------------------------------------   
-		   LOWNBR NOW BECOMES ``PREVIOUS NEIGHBOR'' OF HINBR.   
+		/* --------------------------------------------------
+		   LOWNBR NOW BECOMES ``PREVIOUS NEIGHBOR'' OF HINBR.
 		   -------------------------------------------------- */
 		prvnbr[hinbr] = lownbr;
 	    }
 	} /* for j ... */
-	
-	/* ----------------------------------------------------   
-	   DECREMENT WEIGHT ( PARENT(LOWNBR) ).   
-	   SET ( P(LOWNBR) ) <-- SET ( P(LOWNBR) ) + SET(XSUP).   
+
+	/* ----------------------------------------------------
+	   DECREMENT WEIGHT ( PARENT(LOWNBR) ).
+	   SET ( P(LOWNBR) ) <-- SET ( P(LOWNBR) ) + SET(XSUP).
 	   ---------------------------------------------------- */
 	parent = etpar[lownbr];
 	--weight[parent];
@@ -383,9 +383,9 @@ qrnzcnt(int_t neqns, int_t adjlen, int_t *xadj, int_t *adjncy, int_t *zfdperm,
 	}
 	set[xsup] = parent;
     } /* for lownbr ... */
-    
-    /* ---------------------------------------------------------   
-       USE WEIGHTS TO COMPUTE COLUMN (AND TOTAL) NONZERO COUNTS.   
+
+    /* ---------------------------------------------------------
+       USE WEIGHTS TO COMPUTE COLUMN (AND TOTAL) NONZERO COUNTS.
        --------------------------------------------------------- */
     *nlnz = nhnz = 0;
     for (k = 0; k < neqns; ++k) {
@@ -403,13 +403,16 @@ qrnzcnt(int_t neqns, int_t adjlen, int_t *xadj, int_t *adjncy, int_t *zfdperm,
 	colcnt_h[k] = temp;
 	nhnz += temp;
 	if (parent != ROOT) {
-	    colcnt_h[parent] += temp;	    
+	    colcnt_h[parent] += temp;
 	}
     }
     part_super_ata[xsup] = neqns - xsup;
 
+    /* Expose total nnz of H to the caller (used to size LU storage). */
+    if ( nhnz_out ) *nhnz_out = nhnz;
+
     /* Fix the supernode partition in H. */
-    
+
     free (set);
     free (prvlf);
     free (level);
@@ -425,17 +428,16 @@ qrnzcnt(int_t neqns, int_t adjlen, int_t *xadj, int_t *adjncy, int_t *zfdperm,
     free (rowcnt_h);
     free (rowcnt);
     free (colcnt);
-    
+
 #if ( PRNTlevel==1 )
-    printf(".. qrnzcnt() nlnz %d, nhnz %d, nlnz/nhnz %.2f\n", 
+    printf(".. qrnzcnt() nlnz %d, nhnz %d, nlnz/nhnz %.2f\n",
 		*nlnz, nhnz, (float) *nlnz/nhnz);
 #endif
 
 #if ( DEBUGlevel>=2 )
     print_int_vec("part_super_h", neqns, part_super_h);
-#endif    
+#endif
 
     return 0;
-    
-} /* qrnzcnt_ */
 
+} /* qrnzcnt_ */

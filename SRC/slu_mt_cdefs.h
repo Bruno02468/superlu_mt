@@ -1,10 +1,10 @@
 
 /*! \file
 Copyright (c) 2003, The Regents of the University of California, through
-Lawrence Berkeley National Laboratory (subject to receipt of any required 
-approvals from U.S. Dept. of Energy) 
+Lawrence Berkeley National Laboratory (subject to receipt of any required
+approvals from U.S. Dept. of Energy)
 
-All rights reserved. 
+All rights reserved.
 
 The source code is distributed under BSD license, see the file License.txt
 at the top-level directory.
@@ -73,7 +73,7 @@ typedef int int_t; /* default */
  * *************************************************
  *  Global data structures used in LU factorization
  * *************************************************
- * 
+ *
  *   nsuper: number of supernodes = nsuper+1, numbered between 0 and nsuper.
  *
  *   (supno, xsup, xsup_end):
@@ -83,19 +83,19 @@ typedef int int_t; /* default */
  *	Example: supno  0 1 2 2 3 3 3 4 4 4 4 4   (n=12)
  *	          xsup  0 1 2 4 7
  *            xsup_end  1 2 4 7 12
- *	Note: dfs will be performed on supernode rep. relative to the new 
+ *	Note: dfs will be performed on supernode rep. relative to the new
  *	      row pivoting ordering
  *
  *   (lsub, xlsub, xlsub_end):
  *      lsub[*] contains the compressed subscripts of the supernodes;
  *      xlsub[j] points to the starting location of the j-th column in
- *               lsub[*]; 
+ *               lsub[*];
  *      xlsub_end[j] points to one past the ending location of the j-th
  *               column in lsub[*].
  *	Storage: original row subscripts in A.
  *
  *      During the course of sparse LU factorization, we also use
- *	(lsub, xlsub, xlsub_end, xprune) to represent symmetrically 
+ *	(lsub, xlsub, xlsub_end, xprune) to represent symmetrically
  *      pruned graph. Contention will occur when one processor is
  *      performing DFS on supernode S, while another processor is pruning
  *      supernode S. We use the following data structure to deal with
@@ -113,8 +113,8 @@ typedef int int_t; /* default */
  *                                   xlsub[s+1]      :
  *                                       :           :
  *                                       :         xlsub_end[t]
- *                                   xlsub[t]      xprune[t] 
- *                                   xprune[s]    
+ *                                   xlsub[t]      xprune[t]
+ *                                   xprune[s]
  *
  *      (2) if t == s, i.e., a singleton supernode, the subscript set
  *          is stored twice:
@@ -144,17 +144,17 @@ typedef int int_t; /* default */
  *   (lusup, xlusup, xlusup_end):
  *      lusup[*] contains the numerical values of the supernodes;
  *      xlusup[j] points to the starting location of the j-th column in
- *                storage vector lusup[*]; 
- *      xlusup_end[j] points to one past the ending location of the j-th 
+ *                storage vector lusup[*];
+ *      xlusup_end[j] points to one past the ending location of the j-th
  *                column in lusup[*].
  *	Each supernode is stored in column-major, consistent with Fortran
  *      two-dimensional array storage.
  *
  *   (ucol, usub, xusub, xusub_end):
  *      ucol[*] stores the numerical values of the U-columns above the
- *              supernodes. 
+ *              supernodes.
  *      usub[k] stores the row subscripts of nonzeros ucol[k];
- *      xusub[j] points to the starting location of column j in ucol/usub[]; 
+ *      xusub[j] points to the starting location of column j in ucol/usub[];
  *      xusub_end[j] points to one past the ending location column j in
  *                   ucol/usub[].
  *	Storage: new row subscripts; that is indexed intp PA.
@@ -163,7 +163,7 @@ typedef int int_t; /* default */
 typedef struct {
     int_t     *xsup;    /* supernode and column mapping */
     int_t     *xsup_end;
-    int_t     *supno;   
+    int_t     *supno;
     int_t     *lsub;    /* compressed L subscripts */
     int_t	    *xlsub;
     int_t     *xlsub_end;
@@ -182,10 +182,10 @@ typedef struct {
     int_t     nzumax;   /*    "    "    "      ucol[] */
     int_t     nzlumax;  /*    "    "    "     lusup[] */
     /* ---------------------------------------------------------------
-     *  Memory managemant for L supernodes 
+     *  Memory managemant for L supernodes
      */
     int_t  *map_in_sup;  /* size n+1 - the address offset of each column
-                        * in lusup[*], which is divided into regions 
+                        * in lusup[*], which is divided into regions
 			* by the supernodes of Householder matrix H.
 			* If column k starts a supernode in H,
 			* map_in_sup[k] is the next open position in
@@ -198,10 +198,10 @@ typedef struct {
 } GlobalLU_t;
 
 
-/* 
+/*
  * *********************************************************************
  * The pxgstrf_shared_t structure contains the shared task queue and
- * the synchronization variables to facilitate parallel factorization. 
+ * the synchronization variables to facilitate parallel factorization.
  * It also contains the shared L and U data structures.
  * *********************************************************************
  */
@@ -230,7 +230,7 @@ typedef struct {
 /* Arguments passed to each thread. */
 typedef struct {
     int_t  pnum; /* process number */
-    int_t  info; /* error code returned from each thread */       
+    int_t  info; /* error code returned from each thread */
     superlumt_options_t *superlumt_options;
     pxgstrf_shared_t  *pxgstrf_shared; /* shared for LU factorization */
 } pcgstrf_threadarg_t;
@@ -246,16 +246,16 @@ extern "C" {
 
 
 /* ----------------
-   Driver routines 
+   Driver routines
    ---------------*/
 extern void
-pcgssv(int_t, SuperMatrix *, int_t *, int_t *, SuperMatrix *, SuperMatrix *, 
+pcgssv(int_t, SuperMatrix *, int_t *, int_t *, SuperMatrix *, SuperMatrix *,
        SuperMatrix *, int_t *);
 extern void
-pcgssvx(int_t, superlumt_options_t *, SuperMatrix *, int_t *, int_t *,  
+pcgssvx(int_t, superlumt_options_t *, SuperMatrix *, int_t *, int_t *,
 	equed_t *, float *, float *, SuperMatrix *, SuperMatrix *,
-	SuperMatrix *, SuperMatrix *, 
-	float *, float *, float *, float *, superlu_memusage_t *, 
+	SuperMatrix *, SuperMatrix *,
+	float *, float *, float *, float *, superlu_memusage_t *,
 	int_t *);
 extern void
 c_bridge_pcgssv_(int_t *nprocs, int_t *n, int_t *nnz, int_t *nrhs,
@@ -263,11 +263,11 @@ c_bridge_pcgssv_(int_t *nprocs, int_t *n, int_t *nnz, int_t *nrhs,
 		 complex *b, int_t *ldb, int_t *info);
 
 /* ---------------
-   Driver related 
+   Driver related
    ---------------*/
 extern void cgsequ (SuperMatrix *, float *, float *, float *,
                     float *, float *, int_t *);
-extern void claqgs (SuperMatrix *, float *, float *, float, 
+extern void claqgs (SuperMatrix *, float *, float *, float,
 		    float, float, equed_t *);
 extern void cgscon (char *, SuperMatrix *, SuperMatrix *,
 		    float, float *, int_t *);
@@ -280,7 +280,7 @@ extern int_t  sp_ctrsv (char *, char *, char *, SuperMatrix *, SuperMatrix *,
 		      complex *, int_t *);
 extern int_t  sp_cgemv (char *, complex, SuperMatrix *, complex *,
 		      int_t, complex, complex *, int_t);
-extern int_t  sp_cgemm (char *, int_t, int_t, int_t, complex, SuperMatrix *, 
+extern int_t  sp_cgemm (char *, int_t, int_t, int_t, complex, SuperMatrix *,
 		      complex *, int_t, complex, complex *, int_t);
 
 /* ----------------------
@@ -318,8 +318,8 @@ extern void
 cCreate_SuperNode_Matrix(SuperMatrix *, int_t, int_t, int_t, complex *, int_t *, int_t *,
 			int_t *, int_t *, int_t *, Stype_t, Dtype_t, Mtype_t);
 extern void
-cCreate_SuperNode_Permuted(SuperMatrix *, int_t, int_t, int_t, complex *, 
-			   int_t *, int_t *, int_t *, int_t *, int_t *, int_t *, 
+cCreate_SuperNode_Permuted(SuperMatrix *, int_t, int_t, int_t, complex *,
+			   int_t *, int_t *, int_t *, int_t *, int_t *, int_t *,
 			   int_t *, int_t *, Stype_t, Dtype_t, Mtype_t);
 extern void
 cCopy_Dense_Matrix(int_t, int_t, complex *, int_t, complex *, int_t);
@@ -336,12 +336,12 @@ extern void StatAlloc (const int_t, const int_t, const int_t, const int_t, Gstat
 extern void StatInit  (const int_t, const int_t, Gstat_t*);
 extern void StatFree  (Gstat_t*);
 extern void get_perm_c(int_t, SuperMatrix *, int_t *);
-extern int_t  cPresetMap (const int_t, SuperMatrix *, pxgstrf_relax_t *, 
+extern int_t  cPresetMap (const int_t, SuperMatrix *, pxgstrf_relax_t *,
 		       superlumt_options_t *, GlobalLU_t *);
 extern int_t  qrnzcnt (int_t, int_t, int_t *, int_t *, int_t *, int_t *, int_t *, int_t *,
-		     int_t *, int_t *, int_t *, int_t *);
+		     int_t *, int_t *, int_t *, int_t *, int_t *);
 extern int_t  DynamicSetMap(const int_t, const int_t, const int_t, pxgstrf_shared_t*);
-extern void pcgstrf (superlumt_options_t *, SuperMatrix *, int_t *, 
+extern void pcgstrf (superlumt_options_t *, SuperMatrix *, int_t *,
 		     SuperMatrix *, SuperMatrix *, Gstat_t *, int_t *);
 extern void pcgstrf_init (int_t, fact_t, trans_t, yes_no_t, int_t, int_t, float, yes_no_t, double,
 			  int_t *, int_t *, void *, int_t, SuperMatrix *,
@@ -369,37 +369,37 @@ extern int_t  pcgstrf_snode_dfs (const int_t, const int_t, const int_t, const in
 extern int_t  pcgstrf_snode_bmod (const int_t, const int_t, const int_t, const int_t,
 				complex *, complex *, GlobalLU_t*, Gstat_t*);
 extern void pcgstrf_panel_dfs (const int_t, const int_t, const int_t, const int_t,
-			       SuperMatrix *, int_t*, int_t*, int_t*, int_t*, int_t*, 
+			       SuperMatrix *, int_t*, int_t*, int_t*, int_t*, int_t*,
 			       int_t*, int_t*, int_t*, int_t*, int_t*, int_t*, int_t*, int_t*,
 			       complex*, GlobalLU_t *);
 extern void pcgstrf_panel_bmod (const int_t, const int_t, const int_t, const int_t,
 				const int_t, int_t*, int_t*, int_t*, int_t*, int_t*, int_t*,
-				int_t*, int_t*, complex*, complex*, 
+				int_t*, int_t*, complex*, complex*,
 				pxgstrf_shared_t *);
-extern void pcgstrf_bmod1D (const int_t, const int_t, const int_t, const int_t, 
+extern void pcgstrf_bmod1D (const int_t, const int_t, const int_t, const int_t,
 			    const int_t, const int_t, const int_t, int_t, int_t,
-			    int_t *, int_t *, int_t *, int_t *, complex *, complex *, 
+			    int_t *, int_t *, int_t *, int_t *, complex *, complex *,
 			    GlobalLU_t *, Gstat_t *);
 extern void pcgstrf_bmod2D (const int_t, const int_t, const int_t, const int_t,
 			    const int_t, const int_t, const int_t, int_t, int_t,
 			    int_t *, int_t *, int_t *, int_t *, complex *, complex *,
 			    GlobalLU_t *, Gstat_t *);
-extern void pcgstrf_bmod1D_mv2 (const int_t, const int_t, const int_t, const int_t, 
+extern void pcgstrf_bmod1D_mv2 (const int_t, const int_t, const int_t, const int_t,
 				const int_t, const int_t, const int_t, int_t, int_t,
-				int_t *, int_t *, int_t *, int_t *, complex *, 
+				int_t *, int_t *, int_t *, int_t *, complex *,
 				complex *, GlobalLU_t *, Gstat_t *);
 extern void pcgstrf_bmod2D_mv2 (const int_t, const int_t, const int_t, const int_t,
 				const int_t, const int_t, const int_t, int_t, int_t,
 				int_t *, int_t *, int_t *, int_t *, complex *, complex *,
 				GlobalLU_t *, Gstat_t *);
-extern void pxgstrf_super_bnd_dfs (const int_t, const int_t, const int_t, 
+extern void pxgstrf_super_bnd_dfs (const int_t, const int_t, const int_t,
 				   const int_t, const int_t, SuperMatrix*,
 				   int_t*, int_t*, int_t*, int_t *, int_t *, int_t *,
 				   int_t *, pxgstrf_shared_t *);
 extern int_t  pcgstrf_column_dfs(const int_t, const int_t, const int_t, const int_t,
 			       int_t*, int_t*, int_t*, int_t, int_t*, int_t*, int_t*, int_t*,
 			       int_t *, int_t *, int_t *, int_t *, pxgstrf_shared_t *);
-extern int_t  pcgstrf_column_bmod(const int_t, const int_t, const int_t, const int_t, 
+extern int_t  pcgstrf_column_bmod(const int_t, const int_t, const int_t, const int_t,
 				int_t*, int_t*, complex*, complex*,
 				pxgstrf_shared_t *, Gstat_t *);
 extern int_t  pcgstrf_pivotL (const int_t, const int_t, const float, yes_no_t*,
@@ -419,9 +419,9 @@ extern void creadmt (int_t *, int_t *, int_t *, complex **, int_t **, int_t **);
 extern void creadhb (int_t *, int_t *, int_t *, complex **, int_t **, int_t **);
 extern void creadMM (int_t *m, int_t *n, int_t *nonz, complex **nzval, int_t **rowind, int_t **colptr);
 extern void cGenXtrue (int_t, int_t, complex *, int_t);
-extern void cFillRHS (trans_t, int_t, complex *, int_t, 
+extern void cFillRHS (trans_t, int_t, complex *, int_t,
 		      SuperMatrix *, SuperMatrix *);
-extern void cgstrs (trans_t, SuperMatrix *, SuperMatrix*, 
+extern void cgstrs (trans_t, SuperMatrix *, SuperMatrix*,
 		    int_t*, int_t*, SuperMatrix*, Gstat_t *, int_t *);
 extern void clsolve (int_t, int_t, complex *, complex *);
 extern void cusolve (int_t, int_t, complex *, complex *);
@@ -429,7 +429,7 @@ extern void cmatvec (int_t, int_t, int_t, complex *, complex *, complex *);
 
 
 /* ---------------
-   BLAS 
+   BLAS
    ---------------*/
 extern int cgemm_(char*, char*, int*, int*, int*, complex*,
                   complex*, int*, complex*, int*, complex*,
@@ -438,11 +438,11 @@ extern int ctrsm_(char*, char*, char*, char*, int*, int*, complex*,
                   complex*, int*, complex*, int*);
 extern int ctrsv_(char*, char*, char*, int*, complex*, int*,
                   complex*, int*);
-extern int cgemv_(char*, int*, int*, complex*, complex*, 
+extern int cgemv_(char*, int*, int*, complex*, complex*,
 		   int*, complex*, int*, complex*, complex*, int*);
 
 /* ---------------
-   Memory related 
+   Memory related
    ---------------*/
 extern float pcgstrf_MemInit (int_t, int_t, superlumt_options_t *,
 			SuperMatrix *, SuperMatrix *, GlobalLU_t *);
@@ -460,7 +460,7 @@ extern int_t  *intCalloc (int_t);
 extern complex *complexMalloc(int_t);
 extern complex *complexCalloc(int_t);
 extern int_t  memory_usage ();
-extern int_t  superlu_cQuerySpace (int_t, SuperMatrix *, SuperMatrix *, int_t, 
+extern int_t  superlu_cQuerySpace (int_t, SuperMatrix *, SuperMatrix *, int_t,
 				 superlu_memusage_t *);
 extern int_t  Glu_alloc (const int_t, const int_t, const int_t, const MemType,
 		       int_t *, pxgstrf_shared_t *);
@@ -485,7 +485,7 @@ extern void    PrintSumm(char *, int_t, int_t, int_t);
 extern void    cPrintPerf(SuperMatrix *, SuperMatrix *, superlu_memusage_t *,
 			 float, float, float *, float *, char *,
 			 Gstat_t *);
-extern void    cCompRow_to_CompCol(int_t m, int_t n, int_t nnz, 
+extern void    cCompRow_to_CompCol(int_t m, int_t n, int_t nnz,
                            complex *a, int_t *colind, int_t *rowptr,
                            complex **at, int_t **rowind, int_t **colptr);
 
@@ -504,4 +504,3 @@ extern void    check_repfnz(int_t, int_t, int_t, int_t *);
 
 
 #endif /* __SLU_MT_CDEFS */
-

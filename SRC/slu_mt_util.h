@@ -1,9 +1,9 @@
 /*! \file
 Copyright (c) 2003, The Regents of the University of California, through
-Lawrence Berkeley National Laboratory (subject to receipt of any required 
-approvals from U.S. Dept. of Energy) 
+Lawrence Berkeley National Laboratory (subject to receipt of any required
+approvals from U.S. Dept. of Energy)
 
-All rights reserved. 
+All rights reserved.
 
 The source code is distributed under BSD license, see the file License.txt
 at the top-level directory.
@@ -30,15 +30,15 @@ at the top-level directory.
 /***********************************************************************
  * Macros
  ***********************************************************************/
-/*                                                                                           
+/*
  * You can support older version of SuperLU_MT
- * At compile-time, you can catch the new release as:                                          
+ * At compile-time, you can catch the new release as:
  *   #ifdef SUPERLU_MT_MAJOR_VERSION == 4
- *       use the new interface                                                                 
- *   #else                                                                                     
- *       use the old interface                                                                 
- *   #endif                                                                                    
- * Versions 3.x and earlier do not include a #define'd version numbers.                        
+ *       use the new interface
+ *   #else
+ *       use the old interface
+ *   #endif
+ * Versions 3.x and earlier do not include a #define'd version numbers.
  */
 #define SUPERLU_MT_MAJOR_VERSION     4
 #define SUPERLU_MT_MINOR_VERSION     0
@@ -100,8 +100,8 @@ at the top-level directory.
 #define TOC(t2, t1)
 #endif
 
-/* 
- * Constants 
+/*
+ * Constants
  */
 #define EMPTY	(-1)
 #define FALSE	0
@@ -118,7 +118,7 @@ typedef enum {NATURAL, MMD_ATA, MMD_AT_PLUS_A, COLAMD,
 typedef enum {NOEQUIL, ROW, COL, BOTH}       equed_t;
 typedef enum {LUSUP, UCOL, LSUB, USUB}       MemType;
 
-/* Number of marker arrays used in the symbolic factorization, 
+/* Number of marker arrays used in the symbolic factorization,
    each of size nrow. */
 #define NO_MARKER     3
 
@@ -164,12 +164,12 @@ typedef enum {
     NPHASES
 } PhaseType;
 
-/* 
+/*
  * *********************************************************************
- * The superlumt_options_t structure contains the shared variables used 
+ * The superlumt_options_t structure contains the shared variables used
  * for factorization, which are passed to each thread.
  * *********************************************************************
- * 
+ *
  * nprocs (int)
  *        Number of processes (or threads) to be spawned and used to perform
  *        the LU factorization by pdgstrf().
@@ -210,8 +210,8 @@ typedef enum {
  * diag_pivot_thresh (double)
  *        Diagonal pivoting threshold. At step j of the Gaussian elimination,
  *        if abs(A_jj) >= diag_pivot_thresh * (max_(i>=j) abs(A_ij)),
- *        use A_jj as pivot, else use A_ij with maximum magnitude. 
- *        0 <= diag_pivot_thresh <= 1. The default value is 1, 
+ *        use A_jj as pivot, else use A_ij with maximum magnitude.
+ *        0 <= diag_pivot_thresh <= 1. The default value is 1,
  *        corresponding to partial pivoting.
  *
  * drop_tol (double) (NOT IMPLEMENTED)
@@ -232,8 +232,8 @@ typedef enum {
  *        Specifies whether to print solver's statistics.
  *
  * perm_c (int*) dimension A->ncol
- *	  Column permutation vector, which defines the 
- *        permutation matrix Pc; perm_c[i] = j means column i of A is 
+ *	  Column permutation vector, which defines the
+ *        permutation matrix Pc; perm_c[i] = j means column i of A is
  *        in position j in A*Pc.
  *        When search for diagonal, perm_c[*] is applied to the
  *        row subscripts of A, so that diagonal threshold pivoting
@@ -298,14 +298,19 @@ typedef struct {
     void *work;
     int_t  lwork;
 
-    /* The following structural arrays are computed internally by 
+    /* The following structural arrays are computed internally by
        sp_colorder(). The user needs to allocate space on input.
-       These 3 arrays are computed in the first factorization, and are 
+       These 3 arrays are computed in the first factorization, and are
        re-used in the subsequent factors of the matrices with the same
        nonzero structure. */
     int_t  *etree;
     int_t  *colcnt_h;
     int_t  *part_super_h;
+    /* Total nnz of the Householder/Cholesky factor H, computed by
+       sp_colorder() via qrnzcnt()/cholnzcnt(). Used by p?gstrf_MemInit()
+       to derive provably-safe upper bounds on nzumax/nzlmax, replacing the
+       FILL_UCOL/FILL_LSUB heuristics from sp_ienv(7,8). 0 if unavailable. */
+    int_t  nnzH;
 } superlumt_options_t;
 
 /* ----------------------------------------------
@@ -385,7 +390,7 @@ typedef struct {
     float eft;  /* earliest finishing time */
     float pmod; /* pmod update to the ancestor panel */
 } desc_eft_t;
-		   
+
 /* All statistics. */
 typedef struct {
     int_t     	*panel_histo;	/* Panel size distribution */
@@ -398,8 +403,8 @@ typedef struct {
     float     	flops_last_P_panels;
     /**/
     stat_relax_t *stat_relax;
-    stat_col_t *stat_col; 
-    stat_snode_t *stat_snode; 
+    stat_col_t *stat_col;
+    stat_snode_t *stat_snode;
     int_t *panhows;
     cp_panel_t *cp_panel; /* panels on the critical path */
     desc_eft_t *desc_eft; /* all we need to know from descendants */
@@ -420,10 +425,10 @@ struct Branch {
 int_t 	no_panels;
 float   sum_w;          /* Sum (Wi) */
 float 	sum_np_w;       /* Sum (Npi*Wi) */
-int_t 	max_np;          
+int_t 	max_np;
 int_t     no_sups;
 float   sum_sup;        /* Sum (Supi) */
-int_t     max_sup;     
+int_t     max_sup;
 flops_t reuse_flops;    /* Triangular solve and matrix vector multiply */
 float   reuse_data;     /* Doubles in updating supernode */
 
@@ -453,7 +458,7 @@ flops_t *trsv_ops;      /* flops distribution on n */
 #ifdef __cplusplus
 extern "C" {
 #endif
-    
+
 extern void sp_colorder(SuperMatrix *, int_t *, superlumt_options_t *, SuperMatrix *);
 extern int sp_coletree(
 	    int_t *acolst, int_t *acolend, /* column start and end past 1 */
@@ -463,8 +468,9 @@ extern int sp_coletree(
 		       );
 extern int sp_symetree(int_t *, int_t *, int_t *, int_t, int_t *);
 extern int cholnzcnt(int_t neqns, int_t *xadj, int_t *adjncy,
-		     int_t *perm, int_t *invp, int_t *etpar, 
-		     int_t *colcnt, int_t *nlnz, int_t *part_super_L);
+		     int_t *perm, int_t *invp, int_t *etpar,
+		     int_t *colcnt, int_t *nlnz, int_t *nhnz,
+		     int_t *part_super_L);
 extern int  cpp_defs();
 extern int  xerbla_ (char *, int *);
 extern void superlu_abort_and_exit(char*);
@@ -480,4 +486,3 @@ extern int PrintInt10(char *name, int_t len, int_t *x);
 #endif
 
 #endif /* __SUPERLU_UTIL */
-
